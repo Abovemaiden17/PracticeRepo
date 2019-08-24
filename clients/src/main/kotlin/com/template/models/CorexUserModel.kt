@@ -1,4 +1,4 @@
-package corexchange.models
+package com.template.models
 
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.r3.corda.lib.tokens.contracts.types.TokenType

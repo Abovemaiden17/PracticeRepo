@@ -3,8 +3,8 @@ package corexchange.webserver
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.r3.corda.lib.tokens.contracts.types.TokenType
 import corexchange.flows.RegisterFlow
-import corexchange.models.CorexRegisterModel
-import corexchange.models.CorexUserModel
+import com.template.models.CorexRegisterModel
+import com.template.models.CorexUserModel
 import corexchange.states.UserState
 import corexchange.webserver.utilities.FlowHandlerCompletion
 import corexchange.webserver.utilities.Plugin
