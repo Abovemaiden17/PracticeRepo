@@ -29,9 +29,9 @@ class SellProductFlow (private val productId: String,
         val partyB = stringToParty("PartyB")
         val session = initiateFlow(partyB)
         val stx = subFlow(CollectSignaturesFlow(verifyAndSign(builder()), listOf(session)))
-        session.send(UserWallet(sellProductId, buyerId))
         subFlow(FinalityFlow(stx, listOf(session)))
         subFlow(UpdateSellerWalletFlow(sellProductId, sellerId))
+        subFlow(UpdateBuyerWalletFlow(sellProductId, buyerId))
         return subFlow(RemoveProductFlow(productId))
     }
 
@@ -44,19 +44,11 @@ class SellProductFlow (private val productId: String,
 
     private fun builder() = TransactionBuilder(notary = getPreferredNotary(serviceHub)).apply {
         val partyB = stringToParty("PartyB")
-        val cmd = Command(ProductContract.Commands.Sell(), listOf(partyB.owningKey))
+        val cmd = Command(ProductContract.Commands.Sell(), listOf(ourIdentity.owningKey, partyB.owningKey))
         addOutputState(outState(), ProductContract.PRODUCT_ID)
         addCommand(cmd)
     }
 
-//    private fun newStateBuyer(): UserState
-//    {
-//        val buyer = inputUserRefUsingLinearID(stringToLinearID(buyerId)).state.data
-//        val sellProduct = inputSellProductRefUsingLinearID(stringToLinearID(sellProductId)).state.data
-//        val x = (buyer.wallet.quantity - sellProduct.amount.quantity).toString()
-////        return buyer.copy(wallet = Amount(buyer.wallet.quantity - sellProduct.amount.quantity, Currency.getInstance("USD")))
-//        return buyer.copy(wallet = Amount.parseCurrency("$$x"))
-//    }
 }
 
 @InitiatedBy(SellProductFlow::class)
@@ -65,8 +57,6 @@ class SellProductFlowResponder(private val flowSession: FlowSession): FlowFuncti
     @Suspendable
     override fun call(): SignedTransaction
     {
-        val user = flowSession.receive<UserWallet>().unwrap { it }
-        subFlow(UpdateBuyerWalletFlow(user.sellProductId, user.buyerId))
         subFlow(object : SignTransactionFlow(flowSession)
         {
             override fun checkTransaction(stx: SignedTransaction)
@@ -76,6 +66,3 @@ class SellProductFlowResponder(private val flowSession: FlowSession): FlowFuncti
         return subFlow(ReceiveFinalityFlow(otherSideSession = flowSession))
     }
 }
-
-@CordaSerializable
-data class UserWallet(val sellProductId: String, val buyerId: String)

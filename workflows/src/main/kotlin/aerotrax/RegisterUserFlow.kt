@@ -8,12 +8,12 @@ import com.r3.corda.lib.tokens.workflows.utilities.getPreferredNotary
 import net.corda.core.contracts.Amount
 import net.corda.core.contracts.Command
 import net.corda.core.contracts.UniqueIdentifier
-import net.corda.core.flows.FinalityFlow
-import net.corda.core.flows.StartableByRPC
+import net.corda.core.flows.*
 import net.corda.core.transactions.SignedTransaction
 import net.corda.core.transactions.TransactionBuilder
 import java.util.*
 
+@InitiatingFlow
 @StartableByRPC
 class RegisterUserFlow (private val name: String,
                         private val companyName: String): FlowFunctions()
@@ -21,24 +21,43 @@ class RegisterUserFlow (private val name: String,
     @Suspendable
     override fun call(): SignedTransaction
     {
-        return subFlow(FinalityFlow(verifyAndSign(builder()), listOf()))
+        val session = initiateFlow(stringToParty("PartyB"))
+        val stx = subFlow(CollectSignaturesFlow(verifyAndSign(builder()), listOf(session)))
+        return subFlow(FinalityFlow(stx, listOf(session)))
     }
 
     private fun outState(): UserState
     {
+        val partyB = stringToParty("PartyB")
         return UserState(
                 name = name,
                 companyName = companyName,
-                wallet = Amount.parseCurrency("$100"),
-//                wallet = Amount(100, Currency.getInstance("USD")),
+                wallet = Amount.fromDecimal(100.toBigDecimal(), Currency.getInstance("USD")),
                 linearId = UniqueIdentifier(),
-                participants = listOf(ourIdentity)
+                participants = listOf(ourIdentity, partyB)
         )
     }
 
     private fun builder() = TransactionBuilder(notary = getPreferredNotary(serviceHub)).apply {
-        val cmd = Command(UserContract.Commands.Register(), listOf(ourIdentity.owningKey))
+        val partyB = stringToParty("PartyB")
+        val cmd = Command(UserContract.Commands.Register(), listOf(ourIdentity.owningKey, partyB.owningKey))
         addOutputState(outState(), UserContract.USER_ID)
         addCommand(cmd)
+    }
+}
+
+@InitiatedBy(RegisterUserFlow::class)
+class RegisterUserFlowResponder(private val flowSession: FlowSession): FlowLogic<SignedTransaction>()
+{
+    @Suspendable
+    override fun call(): SignedTransaction
+    {
+        subFlow(object : SignTransactionFlow(flowSession)
+        {
+            override fun checkTransaction(stx: SignedTransaction)
+            {
+            }
+        })
+        return subFlow(ReceiveFinalityFlow(otherSideSession = flowSession))
     }
 }

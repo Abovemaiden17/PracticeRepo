@@ -31,7 +31,7 @@ class ListProductFlow (private val serialId: String): FlowFunctions()
         val product = inputProductRefUsingSerialId(serialId)!!.state.data
         val partyB = stringToParty("PartyB")
         return SellProductState(
-                amount = Amount.parseCurrency("$10"),
+                amount = Amount.fromDecimal(10.toBigDecimal(), Currency.getInstance("USD")),
                 serialId = product.serialId,
                 linearId = UniqueIdentifier(),
                 participants = listOf(ourIdentity, partyB)
