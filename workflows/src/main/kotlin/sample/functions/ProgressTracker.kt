@@ -1,4 +1,4 @@
-package aerotrax.functions
+package sample.functions
 
 import net.corda.core.flows.FinalityFlow
 import net.corda.core.utilities.ProgressTracker

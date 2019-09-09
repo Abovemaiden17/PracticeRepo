@@ -1,15 +1,15 @@
-package aerotrax.contracts
+package sample.contracts
 
 import net.corda.core.contracts.CommandData
 import net.corda.core.contracts.Contract
 import net.corda.core.contracts.TypeOnlyCommandData
 import net.corda.core.transactions.LedgerTransaction
 
-class ProductContract : Contract
+class SampleContract : Contract
 {
     companion object
     {
-        const val PRODUCT_ID = "aerotrax.contracts.ProductContract"
+        const val SAMPLE_ID = "sample.contracts.SampleContract"
     }
 
     override fun verify(tx: LedgerTransaction)
@@ -20,7 +20,5 @@ class ProductContract : Contract
     interface Commands : CommandData
     {
         class Register : TypeOnlyCommandData(), Commands
-        class Remove : TypeOnlyCommandData(), Commands
-        class Sell : TypeOnlyCommandData(), Commands
     }
 }
